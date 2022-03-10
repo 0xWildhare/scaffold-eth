@@ -18,6 +18,7 @@ export default function Dex(props) {
 
   const [form, setForm] = useState({});
   const [values, setValues] = useState({});
+  console.log("values:",values);
   const tx = props.tx;
 
   const writeContracts = props.writeContracts;
@@ -107,16 +108,24 @@ export default function Dex(props) {
 
         {rowForm("deposit", "📥", async value => {
           let valueInEther = ethers.utils.parseEther("" + value);
-          let valuePlusExtra = ethers.utils.parseEther("" + value * 1.03);
+          let valuePlusExtra = value * 1.03;
           console.log("valuePlusExtra", valuePlusExtra);
+          console.log("tokens", tokenBalanceFloat);
+          console.log("eth", ethBalanceFloat);
+
+          let allowanceAmountFloat = valuePlusExtra * tokenBalanceFloat / ethBalanceFloat;
+          console.log("allowance float", allowanceAmountFloat)
+          let allowanceAmount = ethers.utils.parseEther("" + allowanceAmountFloat);
+          console.log("allowance amount:", allowanceAmount);
+
           let allowance = await props.readContracts[tokenName].allowance(
             props.address,
             props.readContracts[contractName].address,
           );
           console.log("allowance", allowance);
-          if (allowance.lt(valuePlusExtra)) {
+          if (allowance.lt(allowanceAmount)) {
             await tx(
-              writeContracts[tokenName].approve(props.readContracts[contractName].address, valuePlusExtra, {
+              writeContracts[tokenName].approve(props.readContracts[contractName].address, allowanceAmount, {
                 gasLimit: 200000,
               }),
             );
